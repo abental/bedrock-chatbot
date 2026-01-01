@@ -3,7 +3,7 @@
 
 set -e
 
-DOCS_DIR="/Users/israelbental/my_code/bedrock-chatbot/docs"
+DOCS_DIR="~/my_code/bedrock-chatbot/docs"
 IMAGES_DIR="$DOCS_DIR/images"
 TEMP_DIR="/tmp/mermaid-temp"
 
