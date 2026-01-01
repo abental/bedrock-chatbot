@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bedrock KB Chatbot - System Architecture</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                primaryColor: '#4A90E2',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#2E5C8A',
+                lineColor: '#333',
+                secondaryColor: '#FF6B6B',
+                tertiaryColor: '#51CF66'
+            }
+        });
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4A90E2;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #4A90E2;
+            margin-top: 40px;
+            border-left: 4px solid #4A90E2;
+            padding-left: 15px;
+        }
+        .diagram-container {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .mermaid {
+            text-align: center;
+        }
+        .legend {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .legend-item {
+            display: inline-block;
+            margin: 5px 15px;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        th {
+            background: #4A90E2;
+            color: white;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏗️ Bedrock Knowledge Base Chatbot - System Architecture</h1>
+    
+    <div class="legend">
+        <strong>Legend:</strong>
+        <span class="legend-item" style="background: #4A90E2; color: white;">EC2/Compute</span>
+        <span class="legend-item" style="background: #FF6B6B; color: white;">Bedrock/AI</span>
+        <span class="legend-item" style="background: #51CF66; color: white;">OpenSearch</span>
+        <span class="legend-item" style="background: #FFD43B; color: #000;">S3/Storage</span>
+        <span class="legend-item" style="background: #845EF7; color: white;">Application</span>
+    </div>
+
+    <h2>1. Complete System Architecture</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+graph TB
+    subgraph "Internet"
+        User[👤 Users]
+        Admin[👤 Admin Users]
+    end
+
+    subgraph "AWS VPC"
+        subgraph "Public Subnet"
+            EC2[🖥️ EC2 Instance<br/>Ubuntu 22.04<br/>Flask Application<br/>Port 8080<br/>10GB Disk]
+            IGW[🌐 Internet Gateway]
+        end
+        
+        subgraph "Private Subnet"
+            PrivateSubnet[Private Subnet<br/>Reserved for future use]
+        end
+    end
+
+    subgraph "AWS Services"
+        subgraph "Storage & Search"
+            S3[📦 S3 Bucket<br/>abt-knowledge-base<br/>Documents Storage]
+            OpenSearch[🔍 OpenSearch Serverless<br/>Vector Search Collection<br/>bedrock-index]
+        end
+        
+        subgraph "AI Services"
+            BedrockKB[🤖 Bedrock Knowledge Base<br/>Vector Knowledge Base<br/>OpenAI GPT OSS 120B]
+            BedrockModel[🧠 Bedrock Model<br/>openai.gpt-oss-120b-1:0<br/>or anthropic.claude-3-5-sonnet-20241022-v2:0]
+        end
+        
+        subgraph "IAM"
+            BedrockRole[🔐 Bedrock KB Role<br/>S3 + OpenSearch Access]
+            OpenSearchRole[🔐 OpenSearch Role<br/>Collection Access]
+            EC2Role[🔐 EC2 Role<br/>Bedrock + S3 + OpenSearch]
+            AppUser[👤 Application User]
+            AppGroup[👥 Application Group<br/>Marketplace Permissions]
+        end
+    end
+
+    subgraph "Application Components"
+        Flask[🐍 Flask Application<br/>Modular Packages<br/>Port 8080]
+        APIRoutes[🌐 API Routes<br/>Blueprints<br/>/api/ask, /api/history<br/>/api/sources, /api/admin]
+        Database[(💾 SQLite Database<br/>History + Metrics)]
+        PromptEngine[📝 Prompt Engine<br/>Advanced Prompts]
+        Logging[📋 Logging System<br/>INI Configurable]
+    end
+
+    %% User interactions
+    User -->|HTTP/HTTPS| EC2
+    Admin -->|HTTP/HTTPS| EC2
+    EC2 -->|Uses| Flask
+    Flask -->|Routes| APIRoutes
+    APIRoutes -->|Queries| BedrockKB
+    APIRoutes -->|Stores| Database
+    APIRoutes -->|Uses| PromptEngine
+    Flask -->|Uses| Logging
+
+    %% EC2 connections
+    EC2 -->|Assumes| EC2Role
+    EC2 -->|Uploads Documents| S3
+    EC2 -->|Queries| BedrockKB
+
+    %% Bedrock Knowledge Base flow
+    BedrockKB -->|Uses| BedrockModel
+    BedrockKB -->|Reads Documents| S3
+    BedrockKB -->|Stores Vectors| OpenSearch
+    BedrockKB -->|Assumes| BedrockRole
+
+    %% IAM role relationships
+    BedrockRole -->|Access| S3
+    BedrockRole -->|Access| OpenSearch
+    OpenSearchRole -->|Manages| OpenSearch
+    EC2Role -->|Access| BedrockKB
+    EC2Role -->|Access| S3
+    EC2Role -->|Access| OpenSearch
+
+    %% User and group
+    AppUser -->|Member of| AppGroup
+
+    %% Network flow
+    IGW -->|Routes| EC2
+    User -->|Via| IGW
+    Admin -->|Via| IGW
+
+    %% Data flow
+    S3 -.->|Auto Sync| BedrockKB
+    BedrockKB -.->|Ingestion| OpenSearch
+
+    style EC2 fill:#4A90E2,stroke:#2E5C8A,color:#fff
+    style BedrockKB fill:#FF6B6B,stroke:#C92A2A,color:#fff
+    style OpenSearch fill:#51CF66,stroke:#2F9E44,color:#fff
+    style S3 fill:#FFD43B,stroke:#F59F00,color:#000
+    style Flask fill:#845EF7,stroke:#5F3DC4,color:#fff
+    style Database fill:#20C997,stroke:#087F5B,color:#fff
+        </div>
+    </div>
+
+    <h2>2. Data Flow Sequence</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+sequenceDiagram
+    participant User
+    participant Flask
+    participant BedrockKB
+    participant OpenSearch
+    participant S3
+    participant Database
+
+    User->>Flask: Ask Question
+    Flask->>Database: Save Query (History)
+    Flask->>BedrockKB: Query Knowledge Base
+    BedrockKB->>OpenSearch: Vector Search
+    OpenSearch-->>BedrockKB: Relevant Chunks
+    BedrockKB->>BedrockKB: Generate Answer (Claude)
+    BedrockKB-->>Flask: Answer + Sources
+    Flask->>Database: Save Response (Metrics)
+    Flask-->>User: Display Answer + Sources
+
+    Note over User,Database: Admin Upload Flow
+    User->>Flask: Upload Document
+    Flask->>S3: Upload File
+    S3->>BedrockKB: Auto Sync Trigger
+    BedrockKB->>BedrockKB: Process Document
+    BedrockKB->>OpenSearch: Index Vectors
+    BedrockKB-->>Flask: Sync Complete
+        </div>
+    </div>
+
+    <h2>3. Network Architecture</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+graph TB
+    subgraph Internet
+        InternetNode[🌐 Internet]
+    end
+
+    subgraph VPC["VPC 10.0.0.0/16"]
+        IGW[🌐 Internet Gateway]
+        
+        subgraph PublicSubnet["Public Subnet 10.0.1.0/24"]
+            EC2[🖥️ EC2 Instance<br/>Public IP<br/>Ports 22 80 443 8080]
+            RouteTablePub[📋 Public Route Table<br/>Default Route to IGW]
+        end
+        
+        subgraph PrivateSubnet["Private Subnet 10.0.2.0/24"]
+            PrivateSubnetNode[🔒 Private Subnet<br/>Future RDS ElastiCache]
+        end
+    end
+
+    subgraph AWSServices["AWS Managed Services"]
+        S3[📦 S3 Bucket]
+        Bedrock[🤖 Bedrock]
+        OpenSearch[🔍 OpenSearch Serverless]
+    end
+
+    InternetNode --> IGW
+    IGW --> RouteTablePub
+    RouteTablePub --> EC2
+    EC2 -->|HTTPS| Bedrock
+    EC2 -->|HTTPS| S3
+    EC2 -->|HTTPS| OpenSearch
+    Bedrock --> S3
+    Bedrock --> OpenSearch
+
+    style EC2 fill:#4A90E2,stroke:#2E5C8A,color:#fff
+    style IGW fill:#FFD43B,stroke:#F59F00,color:#000
+    style Bedrock fill:#51CF66,stroke:#2F9E44,color:#fff
+        </div>
+    </div>
+
+    <h2>4. IAM Permissions Flow</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+graph TB
+    subgraph "IAM Roles"
+        BedrockRole[🔐 Bedrock KB Role<br/>bedrock.amazonaws.com]
+        OpenSearchRole[🔐 OpenSearch Role<br/>aoss.amazonaws.com]
+        EC2Role[🔐 EC2 Role<br/>ec2.amazonaws.com]
+    end
+
+    subgraph "IAM Policies"
+        BedrockS3Policy[📄 Bedrock → S3<br/>GetObject, ListBucket]
+        BedrockOSPolicy[📄 Bedrock → OpenSearch<br/>APIAccessAll]
+        EC2BedrockPolicy[📄 EC2 → Bedrock<br/>InvokeModel, RetrieveAndGenerate]
+        EC2S3Policy[📄 EC2 → S3<br/>GetObject, PutObject, ListBucket]
+        EC2OSPolicy[📄 EC2 → OpenSearch<br/>APIAccessAll]
+    end
+
+    subgraph "Resources"
+        S3[📦 S3 Bucket]
+        OpenSearch[🔍 OpenSearch]
+        Bedrock[🤖 Bedrock]
+    end
+
+    BedrockRole --> BedrockS3Policy
+    BedrockRole --> BedrockOSPolicy
+    BedrockS3Policy --> S3
+    BedrockOSPolicy --> OpenSearch
+    BedrockRole --> Bedrock
+
+    OpenSearchRole --> OpenSearch
+
+    EC2Role --> EC2BedrockPolicy
+    EC2Role --> EC2S3Policy
+    EC2Role --> EC2OSPolicy
+    EC2BedrockPolicy --> Bedrock
+    EC2S3Policy --> S3
+    EC2OSPolicy --> OpenSearch
+
+    style BedrockRole fill:#FF6B6B,stroke:#C92A2A,color:#fff
+    style EC2Role fill:#4A90E2,stroke:#2E5C8A,color:#fff
+    style OpenSearchRole fill:#51CF66,stroke:#2F9E44,color:#fff
+        </div>
+    </div>
+
+    <h2>5. Application Features</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+mindmap
+  root((Bedrock KB<br/>Chatbot))
+    Chatbot Features
+      Query Interface
+        Question Input
+        Answer Display
+        Response Time
+      Search History
+        All Questions Display
+        Session Tracking
+        Query Storage
+        History Sidebar
+      Searched Documents
+        Document List
+        Document Names
+        File Sizes
+        Knowledge Base View
+    Admin Features
+      Document Management
+        Upload to S3
+        File Validation
+        Sync Trigger
+      Configuration
+        Model Settings
+        Prompt Configuration
+        System Prompts
+      Metrics Dashboard
+        Query Statistics
+        Performance Metrics
+        Top Questions
+    Advanced Features
+      Prompt Engineering
+        System Prompts
+        Query Type Detection
+        Few-shot Examples
+        Conversation Context
+      Database
+        Search History
+        Metrics Tracking
+        Session Management
+        </div>
+    </div>
+
+    <h2>6. Component Details</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Component</th>
+                <th>Technology</th>
+                <th>Purpose</th>
+                <th>Location</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Frontend</strong></td>
+                <td>HTML/CSS/JavaScript</td>
+                <td>Chatbot UI, Admin Dashboard</td>
+                <td>EC2 Instance</td>
+            </tr>
+            <tr>
+                <td><strong>Backend</strong></td>
+                <td>Flask (Python 3.14)</td>
+                <td>REST API, Business Logic, Modular Packages</td>
+                <td>EC2 Instance (Port 8080)</td>
+            </tr>
+            <tr>
+                <td><strong>API Structure</strong></td>
+                <td>Flask Blueprints</td>
+                <td>Modular routes: /api/ask, /api/history, /api/sources, /api/admin, /api/metrics, /api/health</td>
+                <td>EC2 Instance</td>
+            </tr>
+            <tr>
+                <td><strong>Logging</strong></td>
+                <td>Python logging + INI</td>
+                <td>Centralized logging configuration, file/stdout modes</td>
+                <td>EC2 Instance</td>
+            </tr>
+            <tr>
+                <td><strong>Database</strong></td>
+                <td>SQLite</td>
+                <td>Search History, Metrics</td>
+                <td>EC2 Instance</td>
+            </tr>
+            <tr>
+                <td><strong>AI Service</strong></td>
+                <td>AWS Bedrock</td>
+                <td>Knowledge Base, OpenAI GPT OSS 120B (or Claude Sonnet 3.5)</td>
+                <td>AWS Managed</td>
+            </tr>
+            <tr>
+                <td><strong>Vector Store</strong></td>
+                <td>OpenSearch Serverless</td>
+                <td>Vector embeddings storage</td>
+                <td>AWS Managed</td>
+            </tr>
+            <tr>
+                <td><strong>Document Store</strong></td>
+                <td>S3</td>
+                <td>Original documents</td>
+                <td>AWS Managed</td>
+            </tr>
+            <tr>
+                <td><strong>Compute</strong></td>
+                <td>EC2 (Ubuntu 22.04)</td>
+                <td>Application hosting</td>
+                <td>Public Subnet</td>
+            </tr>
+            <tr>
+                <td><strong>Networking</strong></td>
+                <td>VPC, Subnets, IGW</td>
+                <td>Network isolation</td>
+                <td>AWS VPC</td>
+            </tr>
+            <tr>
+                <td><strong>Security</strong></td>
+                <td>IAM Roles & Policies</td>
+                <td>Access control</td>
+                <td>AWS IAM</td>
+            </tr>
+            <tr>
+                <td><strong>Infrastructure</strong></td>
+                <td>Terraform</td>
+                <td>Infrastructure as Code</td>
+                <td>Local/CI/CD</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>7. Deployment Flow</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+graph LR
+    subgraph "Development"
+        Local[💻 Local Dev<br/>Docker Compose]
+        Code[📝 Source Code<br/>Git Repository]
+    end
+
+    subgraph "Infrastructure"
+        Terraform[⚙️ Terraform<br/>IaC]
+        AWS[☁️ AWS Resources]
+    end
+
+    subgraph "Deployment"
+        EC2[🖥️ EC2 Instance]
+        Systemd[⚙️ Systemd Service]
+        Nginx[🌐 Nginx]
+        App[🐍 Flask App]
+    end
+
+    Code --> Terraform
+    Terraform --> AWS
+    AWS --> EC2
+    EC2 --> Systemd
+    Systemd --> App
+    Nginx --> App
+    Local --> Code
+
+    style Terraform fill:#7C3AED,stroke:#5B21B6,color:#fff
+    style EC2 fill:#4A90E2,stroke:#2E5C8A,color:#fff
+    style Local fill:#2496ED,stroke:#1E6FA8,color:#fff
+        </div>
+    </div>
+
+    <h2>8. Query Processing Flow</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+flowchart TD
+    Start([User Asks Question]) --> Validate{Valid Question?}
+    Validate -->|No| Error[Return Error]
+    Validate -->|Yes| SaveQuery[Save to History]
+    SaveQuery --> Enhance[Enhance Query<br/>Prompt Engine]
+    Enhance --> SendBedrock[Send to Bedrock KB]
+    SendBedrock --> VectorSearch[Vector Search<br/>OpenSearch]
+    VectorSearch --> Retrieve[Retrieve Top Chunks]
+    Retrieve --> Generate[Generate Answer<br/>OpenAI GPT OSS 120B<br/>or Claude Sonnet 3.5]
+    Generate --> Format[Format Response]
+    Format --> SaveMetrics[Save Metrics]
+    SaveMetrics --> Return[Return Answer + Sources]
+    Return --> Display([Display to User])
+    
+    style Start fill:#4A90E2,stroke:#2E5C8A,color:#fff
+    style Generate fill:#FF6B6B,stroke:#C92A2A,color:#fff
+    style VectorSearch fill:#51CF66,stroke:#2F9E44,color:#fff
+    style Display fill:#20C997,stroke:#087F5B,color:#fff
+        </div>
+    </div>
+
+    <h2>9. REST API Endpoints</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Endpoint</th>
+                <th>Method</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>/api/ask</code></td>
+                <td>POST</td>
+                <td>Submit a question to the knowledge base</td>
+            </tr>
+            <tr>
+                <td><code>/api/history</code></td>
+                <td>GET</td>
+                <td>Get search history (all questions by default)</td>
+            </tr>
+            <tr>
+                <td><code>/api/history/&lt;query_id&gt;</code></td>
+                <td>GET</td>
+                <td>Get details of a specific query</td>
+            </tr>
+            <tr>
+                <td><code>/api/sources</code></td>
+                <td>GET</td>
+                <td>Get list of documents in knowledge base (names and sizes)</td>
+            </tr>
+            <tr>
+                <td><code>/api/admin/login</code></td>
+                <td>POST</td>
+                <td>Admin authentication</td>
+            </tr>
+            <tr>
+                <td><code>/api/admin/kb/status</code></td>
+                <td>GET</td>
+                <td>Get knowledge base status</td>
+            </tr>
+            <tr>
+                <td><code>/api/admin/upload</code></td>
+                <td>POST</td>
+                <td>Upload document to S3</td>
+            </tr>
+            <tr>
+                <td><code>/api/admin/sync</code></td>
+                <td>POST</td>
+                <td>Trigger knowledge base sync</td>
+            </tr>
+            <tr>
+                <td><code>/api/metrics</code></td>
+                <td>GET</td>
+                <td>Get analytics metrics</td>
+            </tr>
+            <tr>
+                <td><code>/api/health</code></td>
+                <td>GET</td>
+                <td>Health check endpoint</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <footer style="margin-top: 40px; padding: 20px; text-align: center; color: #666; border-top: 2px solid #e0e0e0;">
+        <p>Bedrock Knowledge Base Chatbot - Architecture Documentation</p>
+        <p>Last Updated: December 2025</p>
+    </footer>
+</body>
+</html>
+
+
+
+
+

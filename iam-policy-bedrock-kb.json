@@ -1,0 +1,110 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "BedrockKnowledgeBaseAccess",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:GetKnowledgeBase",
+        "bedrock:ListKnowledgeBases",
+        "bedrock:GetDataSource",
+        "bedrock:ListDataSources",
+        "bedrock:StartIngestionJob",
+        "bedrock:GetIngestionJob"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:us-east-1:*:knowledge-base/*",
+        "arn:aws:bedrock:us-east-1:*:data-source/*",
+        "arn:aws:bedrock:us-east-1:*:ingestion-job/*"
+      ]
+    },
+    {
+      "Sid": "BedrockKnowledgeBaseQuery",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:Retrieve",
+        "bedrock:RetrieveAndGenerate"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:us-east-1:*:knowledge-base/*"
+      ]
+    },
+    {
+      "Sid": "BedrockAgentAccess",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeAgent"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:us-east-1:*:agent-alias/*",
+        "arn:aws:bedrock:us-east-1:*:agent/*"
+      ]
+    },
+    {
+      "Sid": "BedrockFoundationModelAccess",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-*",
+        "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-*",
+        "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-*",
+        "arn:aws:bedrock:us-east-1::foundation-model/meta.llama-*",
+        "arn:aws:bedrock:us-east-1::foundation-model/mistral.*",
+        "arn:aws:bedrock:us-east-1::foundation-model/cohere.*",
+        "arn:aws:bedrock:us-east-1::foundation-model/ai21.*",
+        "arn:aws:bedrock:us-east-1::foundation-model/openai.*",
+        "arn:aws:bedrock:us-east-1::foundation-model/openai.gpt-oss-*",
+        "arn:aws:bedrock:us-east-1::foundation-model/google.*",
+        "arn:aws:bedrock:us-east-1::foundation-model/nvidia.*",
+        "arn:aws:bedrock:us-east-1::foundation-model/stability.*",
+        "arn:aws:bedrock:us-east-1::foundation-model/qwen.*",
+        "arn:aws:bedrock:us-east-1::foundation-model/writer.*",
+        "arn:aws:bedrock:us-east-1::foundation-model/twelvelabs.*",
+        "arn:aws:bedrock:us-east-1::foundation-model/moonshot.*",
+        "arn:aws:bedrock:us-east-1::foundation-model/minimax.*",
+        "arn:aws:bedrock:us-east-1::foundation-model/deepseek.*"
+      ]
+    },
+    {
+      "Sid": "BedrockInferenceProfileAccess",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:us-east-1:*:inference-profile/*"
+      ]
+    },
+    {
+      "Sid": "BedrockEmbeddingModelAccess",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v1",
+        "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2",
+        "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-*"
+      ]
+    },
+    {
+      "Sid": "S3DocumentStorageAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::abt-bedrock-kb-store",
+        "arn:aws:s3:::abt-bedrock-kb-store/*"
+      ]
+    }
+  ]
+}
+

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Bedrock KB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <h1>📊 Admin Dashboard</h1>
+            <div class="header-actions">
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <main class="admin-main">
+            <!-- Knowledge Base Status -->
+            <section class="dashboard-section">
+                <h2>Knowledge Base Status</h2>
+                <div class="status-card" id="kbStatusCard">
+                    <div class="loading">Loading status...</div>
+                </div>
+                <button id="refreshStatusBtn" class="btn-primary">Refresh Status</button>
+                <button id="syncBtn" class="btn-primary">Trigger Sync</button>
+            </section>
+
+            <!-- Document Upload -->
+            <section class="dashboard-section">
+                <h2>Upload Documents</h2>
+                <div class="upload-card">
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="fileInput">Select Document</label>
+                            <input 
+                                type="file" 
+                                id="fileInput" 
+                                name="file" 
+                                accept=".pdf,.txt,.doc,.docx,.md,.html,.csv"
+                                required
+                            >
+                            <small>Supported formats: PDF, TXT, DOC, DOCX, MD, HTML, CSV (Max 50MB)</small>
+                        </div>
+                        <button type="submit" id="uploadBtn" class="btn-primary">
+                            <span class="btn-text">Upload to S3</span>
+                            <span class="btn-spinner" style="display: none;">⏳</span>
+                        </button>
+                    </form>
+                    <div id="uploadMessage" class="message" style="display: none;"></div>
+                </div>
+            </section>
+
+            <!-- Metrics Dashboard -->
+            <section class="dashboard-section">
+                <h2>📊 Metrics Dashboard</h2>
+                <div class="metrics-controls">
+                    <select id="metricsDays" class="form-control">
+                        <option value="1">Last 24 hours</option>
+                        <option value="7" selected>Last 7 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                    </select>
+                    <button id="refreshMetricsBtn" class="btn-primary">Refresh Metrics</button>
+                </div>
+                <div class="metrics-dashboard" id="metricsDashboard">
+                    <div class="loading">Loading metrics...</div>
+                </div>
+            </section>
+
+            <!-- Configuration -->
+            <section class="dashboard-section">
+                <h2>Configuration</h2>
+                <div class="config-card" id="configCard">
+                    <div class="loading">Loading configuration...</div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="admin-footer">
+            <p>Knowledge Base Management System</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>
+</body>
+</html>
+

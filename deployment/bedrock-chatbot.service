@@ -1,0 +1,28 @@
+[Unit]
+Description=Bedrock Knowledge Base Chatbot Flask Application
+After=network.target
+
+[Service]
+Type=notify
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/app
+EnvironmentFile=-/etc/bedrock-chatbot/env.conf
+Environment="PATH=/app/venv/bin"
+ExecStart=/app/venv/bin/gunicorn -w 4 -b 0.0.0.0:8080 --timeout 120 --chdir /app app:app
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=10
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bedrock-chatbot
+
+[Install]
+WantedBy=multi-user.target
+
